@@ -8,6 +8,7 @@ Usage:
     export ANTHROPIC_API_KEY=sk-ant-...
     export AGENTSPAN_SERVER_URL=http://localhost:7001/api
     export DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+    export BARKEEPS_BASE_URL=https://your-ledger-host.example.com
     python barkeeps/hourly_digest.py
 
 Schedule hourly with cron:
@@ -32,6 +33,7 @@ def get_top_pages(window_seconds: int = 3600) -> str:
     rows = r.json()
     if not rows:
         return "No page visits recorded in this window."
+    # cap at 20 so the agent doesn't drown in a long tail of one-hit pages
     lines = [f"{row['hits']:4d}  {row['site']}{row['url']}" for row in rows[:20]]
     return "\n".join(lines)
 
@@ -56,13 +58,17 @@ def get_hourly_trend() -> str:
     rows = r.json()
     if not rows:
         return "No hourly data available."
+
     now = int(time.time())
+    # the ledger keeps 30 days; we only want the last 24h for a readable trend
     recent = [row for row in rows if row["hour"] >= now - 86400]
     if not recent:
         recent = rows[-24:]
+
     lines = []
     for row in recent[-24:]:
         ts = time.strftime("%H:00", time.localtime(row["hour"]))
+        # cap bar at 40 chars so it doesn't wrap on narrow terminals
         bar = "#" * min(row["hits"], 40)
         lines.append(f"{ts}  {bar} ({row['hits']})")
     return "\n".join(lines)

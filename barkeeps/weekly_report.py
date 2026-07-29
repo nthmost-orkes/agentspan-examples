@@ -8,6 +8,7 @@ Usage:
     export ANTHROPIC_API_KEY=sk-ant-...
     export AGENTSPAN_SERVER_URL=http://localhost:7001/api
     export DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+    export BARKEEPS_BASE_URL=https://your-ledger-host.example.com
     python barkeeps/weekly_report.py
 
 Schedule weekly with cron (Mondays at 9am):
@@ -23,7 +24,7 @@ MODEL = os.environ.get("AGENTSPAN_LLM_MODEL", "anthropic/claude-haiku-4-5-202510
 BARKEEPS_BASE = os.environ["BARKEEPS_BASE_URL"]
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK_URL"]
 
-WEEK_SECONDS = 604800
+WEEK_SECONDS = 604800  # 7 * 24 * 3600
 
 
 @tool
@@ -38,9 +39,9 @@ def get_weekly_hourly_trend() -> str:
     now = int(time.time())
     week_rows = [row for row in rows if row["hour"] >= now - WEEK_SECONDS]
     if not week_rows:
-        week_rows = rows
+        week_rows = rows  # fall back to whatever we have if the ledger is young
 
-    # Summarize by day-of-week and find daily totals
+    # roll up hourly buckets into daily totals for a readable summary
     daily_totals: dict = {}
     for row in week_rows:
         day = time.strftime("%a %m/%d", time.localtime(row["hour"]))
@@ -89,7 +90,10 @@ def get_weekly_cities() -> str:
     rows = r.json()
     if not rows:
         return "No city data for the week."
-    lines = [f"{row['hits']:4d}  {row.get('city', '?')}, {row.get('country', '?')} ({row.get('code', '?')})" for row in rows[:15]]
+    lines = [
+        f"{row['hits']:4d}  {row.get('city', '?')}, {row.get('country', '?')} ({row.get('code', '?')})"
+        for row in rows[:15]
+    ]
     return "\n".join(lines)
 
 
@@ -100,8 +104,8 @@ def post_weekly_report(report: str) -> str:
     report should be a 150-250 word markdown-friendly summary.
     Returns 'sent' on success.
     """
-    # Discord has a 2000-char message limit; split if needed
-    chunks = [report[i:i+1900] for i in range(0, len(report), 1900)]
+    # Discord silently drops messages over 2000 chars — split to be safe
+    chunks = [report[i:i + 1900] for i in range(0, len(report), 1900)]
     for chunk in chunks:
         payload = {"content": chunk, "username": "barkeeps-ledger weekly"}
         r = requests.post(DISCORD_WEBHOOK, json=payload, timeout=10)
