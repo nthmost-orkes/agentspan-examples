@@ -1,20 +1,14 @@
 # barkeeps-ledger intelligence workflows
 
-Three agent workflows that query a [barkeeps-ledger](https://github.com/nthmost/barkeeps-ledger)
+Three agent workflows that query a [barkeeps-ledger](https://github.com/conductor-oss/barkeeps-ledger)
 instance and post traffic intelligence to Discord.
 
 ## Setup
 
 ```bash
 cp ../.env.example .env
-# fill in ANTHROPIC_API_KEY and AGENTSPAN_SERVER_URL
-```
-
-Also export your secrets (never commit these):
-
-```bash
-export DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
-export BARKEEPS_BASE_URL=https://your-ledger-host.example.com
+# fill in all four values: ANTHROPIC_API_KEY, AGENTSPAN_SERVER_URL,
+# BARKEEPS_BASE_URL, and DISCORD_WEBHOOK_URL
 ```
 
 ## Workflows

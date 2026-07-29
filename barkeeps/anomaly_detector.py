@@ -20,7 +20,7 @@ import requests
 from conductor.ai.agents import Agent, AgentRuntime, tool
 
 MODEL = os.environ.get("AGENTSPAN_LLM_MODEL", "anthropic/claude-haiku-4-5-20251001")
-BARKEEPS_BASE = os.environ.get("BARKEEPS_BASE_URL", "https://bar.nthmost.net")
+BARKEEPS_BASE = os.environ["BARKEEPS_BASE_URL"]
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK_URL"]
 
 
@@ -131,7 +131,7 @@ Anomaly thresholds:
 - Drop: current hour ≤ 0.3× the 6-hour average (and average > 5 hits to avoid noise)
 - None: everything looks normal — call post_anomaly_alert with severity='none'
 
-Be matter-of-fact. "nthmost.com seeing 3.2× normal traffic, top hit: /blog/post-x (47 hits),
+Be matter-of-fact. "example.com seeing 3.2× normal traffic, top hit: /blog/post-x (47 hits),
 most visitors from DE." is a good alert. No emoji, no drama.""",
     max_turns=8,
 )

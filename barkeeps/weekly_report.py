@@ -20,7 +20,7 @@ import requests
 from conductor.ai.agents import Agent, AgentRuntime, tool
 
 MODEL = os.environ.get("AGENTSPAN_LLM_MODEL", "anthropic/claude-haiku-4-5-20251001")
-BARKEEPS_BASE = os.environ.get("BARKEEPS_BASE_URL", "https://bar.nthmost.net")
+BARKEEPS_BASE = os.environ["BARKEEPS_BASE_URL"]
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK_URL"]
 
 WEEK_SECONDS = 604800
@@ -129,7 +129,7 @@ Report format (plain text, no headers, conversational tone):
 
 Write like a thoughtful person reviewing metrics, not like a dashboard dump.
 Example opening: "This week saw 1,240 hits across five sites, peaking on Wednesday.
-The biggest draw was metapub.org's gene search tool (312 hits), followed by..."
+The biggest draw was example.com's docs page (312 hits), followed by..."
 
 Avoid: bullet lists, markdown headers, emoji, percentages without context.""",
     max_turns=8,

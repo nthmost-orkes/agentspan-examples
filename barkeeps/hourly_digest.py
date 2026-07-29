@@ -20,7 +20,7 @@ import requests
 from conductor.ai.agents import Agent, AgentRuntime, tool
 
 MODEL = os.environ.get("AGENTSPAN_LLM_MODEL", "anthropic/claude-haiku-4-5-20251001")
-BARKEEPS_BASE = os.environ.get("BARKEEPS_BASE_URL", "https://bar.nthmost.net")
+BARKEEPS_BASE = os.environ["BARKEEPS_BASE_URL"]
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK_URL"]
 
 
