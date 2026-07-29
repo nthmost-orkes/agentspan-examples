@@ -18,12 +18,22 @@ Usage:
 
 import json
 import os
-import tempfile
+import subprocess
+import uuid
 from conductor.ai.agents import Agent, AgentRuntime, tool
 
-GAME_FILE = os.path.join(tempfile.gettempdir(), "agentspan_number_game.json")
 MAX_TURNS = 20
 MODEL = os.environ.get("AGENTSPAN_LLM_MODEL", "anthropic/claude-haiku-4-5-20251001")
+
+# Fixed path avoids tempfile.gettempdir() disagreeing between main process and worker subprocesses.
+# Override with AGENTSPAN_GAME_FILE if needed.
+GAME_FILE = os.environ.get("AGENTSPAN_GAME_FILE", "/tmp/agentspan_number_game.json")
+
+# Unique session ID prevents Conductor from bleeding prior-game LLM context into this run.
+# Must be set as an env var so worker subprocesses (which re-import this module) share it.
+if "AGENTSPAN_SESSION" not in os.environ:
+    os.environ["AGENTSPAN_SESSION"] = uuid.uuid4().hex[:8]
+_SESSION = os.environ["AGENTSPAN_SESSION"]
 
 
 # ── Shared state helpers ───────────────────────────────────────────────
@@ -128,7 +138,7 @@ def guesser_get_history() -> str:
 # ── Agents ─────────────────────────────────────────────────────────────
 
 keeper = Agent(
-    name="keeper_agent",
+    name=f"keeper_{_SESSION}",
     model=MODEL,
     tools=[set_secret, respond_to_guess, keeper_get_history],
     instructions="""You are the Keeper in an adversarial number-guessing game.
@@ -150,7 +160,7 @@ After each turn briefly explain your strategic reasoning.""",
 )
 
 guesser = Agent(
-    name="guesser_agent",
+    name=f"guesser_{_SESSION}",
     model=MODEL,
     tools=[submit_guess, guesser_get_history],
     instructions="""You are the Guesser in an adversarial number-guessing game.
@@ -191,6 +201,13 @@ def divider(label: str = "") -> None:
 # ── Game loop ──────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    # Kill stale worker subprocesses from any previous killed run so they don't
+    # steal task polls with a stale GAME_FILE path.
+    subprocess.run(
+        ["pkill", "-f", "task_runner"],
+        capture_output=True,
+    )
+
     _save({"secret": None, "lie_used": False, "history": [], "solved": False})
 
     print("=" * 50)
