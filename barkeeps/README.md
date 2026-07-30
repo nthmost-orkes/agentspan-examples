@@ -3,6 +3,9 @@
 Three agent workflows that query a [barkeeps-ledger](https://github.com/conductor-oss/barkeeps-ledger)
 instance and post traffic intelligence to Discord.
 
+![All three workflows firing in Discord](assets/discord-sample.png)
+*Hourly digest, anomaly alert, and weekly narrative — all three running against a live barkeeps-ledger instance.*
+
 ## Setup
 
 ```bash
